@@ -8,39 +8,42 @@ import { SSRContext, SSRContextValue } from "./lib/context";
 import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "./lib/theme";
 
 interface RenderPageOptions {
-	title?: string;
-	timing: ServerTiming;
-	event: H3Event<EventHandlerRequest>;
+  title?: string;
+  timing: ServerTiming;
+  event: H3Event<EventHandlerRequest>;
 }
 
-export const renderPage = async (page: Child, { title, timing, event }: RenderPageOptions) => {
-	timing.start("render");
+export const renderPage = async (
+  page: Child,
+  { title, timing, event }: RenderPageOptions,
+) => {
+  timing.start("render");
 
-	const assets = await getAssets();
+  const assets = await getAssets();
 
-	const storedTheme = getCookie(event, THEME_COOKIE);
-	const theme = isTheme(storedTheme) ? storedTheme : DEFAULT_THEME;
+  const storedTheme = getCookie(event, THEME_COOKIE);
+  const theme = isTheme(storedTheme) ? storedTheme : DEFAULT_THEME;
 
-	// TODO: 103 early hints
+  // TODO: 103 early hints
 
-	const context: SSRContextValue = {
-		url: getRequestURL(event),
-		title,
-		assets,
-		theme,
-	};
+  const context: SSRContextValue = {
+    url: getRequestURL(event),
+    title,
+    assets,
+    theme,
+  };
 
-	const html = renderToString(
-		<SSRContext.Provider value={context}>
-			<App>{page}</App>
-		</SSRContext.Provider>,
-	);
+  const html = renderToString(
+    <SSRContext.Provider value={context}>
+      <App>{page}</App>
+    </SSRContext.Provider>,
+  );
 
-	timing.end("render");
+  timing.end("render");
 
-	setHeaders(event, timing.getHeaders());
+  setHeaders(event, timing.getHeaders());
 
-	return `
+  return `
 <!DOCTYPE html>
 ${html}
 `;

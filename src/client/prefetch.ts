@@ -1,47 +1,49 @@
 const MOUSE_TIMEOUT_MS = 100;
 
 const prefetch = (el: HTMLAnchorElement) => {
-	const href = el.getAttribute("href");
+  const href = el.getAttribute("href");
 
-	if (href?.[0] !== "/" || !el.dataset.prefetch) {
-		return;
-	}
+  if (href?.[0] !== "/" || !el.dataset.prefetch) {
+    return;
+  }
 
-	const link = document.createElement("link");
-	link.href = href;
-	link.rel = "prefetch";
-	link.as = "document";
-	document.head.appendChild(link);
+  const link = document.createElement("link");
+  link.href = href;
+  link.rel = "prefetch";
+  link.as = "document";
+  document.head.appendChild(link);
 
-	delete el.dataset.prefetch;
+  delete el.dataset.prefetch;
 };
 
 if (!HTMLScriptElement.supports?.("speculationrules")) {
-	document.querySelectorAll<HTMLAnchorElement>("[data-prefetch]").forEach(el => {
-		let timeoutId: number | undefined = undefined;
+  document
+    .querySelectorAll<HTMLAnchorElement>("[data-prefetch]")
+    .forEach((el) => {
+      let timeoutId: number | undefined = undefined;
 
-		const onMouseEnter = (event: MouseEvent) => {
-			if (event.relatedTarget) {
-				timeoutId = window.setTimeout(handle, MOUSE_TIMEOUT_MS);
-			}
-		};
+      const onMouseEnter = (event: MouseEvent) => {
+        if (event.relatedTarget) {
+          timeoutId = window.setTimeout(handle, MOUSE_TIMEOUT_MS);
+        }
+      };
 
-		const onMouseLeave = () => {
-			window.clearTimeout(timeoutId);
-		};
+      const onMouseLeave = () => {
+        window.clearTimeout(timeoutId);
+      };
 
-		const handle = () => {
-			prefetch(el);
+      const handle = () => {
+        prefetch(el);
 
-			window.clearTimeout(timeoutId);
+        window.clearTimeout(timeoutId);
 
-			el.removeEventListener("mouseenter", onMouseEnter);
-			el.removeEventListener("mouseleave", onMouseLeave);
-			el.removeEventListener("touchstart", handle);
-		};
+        el.removeEventListener("mouseenter", onMouseEnter);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("touchstart", handle);
+      };
 
-		el.addEventListener("mouseenter", onMouseEnter);
-		el.addEventListener("mouseleave", onMouseLeave);
-		el.addEventListener("touchstart", handle, { passive: true });
-	});
+      el.addEventListener("mouseenter", onMouseEnter);
+      el.addEventListener("mouseleave", onMouseLeave);
+      el.addEventListener("touchstart", handle, { passive: true });
+    });
 }

@@ -48,5 +48,5 @@ if (!("share" in navigator)) {
 `;
 
 export const InlineScript = () => {
-	return <script dangerouslySetInnerHTML={{ __html: script }} />;
+  return <script dangerouslySetInnerHTML={{ __html: script }} />;
 };

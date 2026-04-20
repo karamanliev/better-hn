@@ -9,20 +9,20 @@
 @import "./comment.scss";
 
 html {
-	scrollbar-gutter: stable;
-	color-scheme: light;
+  scrollbar-gutter: stable;
+  color-scheme: light;
 
-	background: var(--bg);
+  background: var(--bg);
 
-	--bg: #fff;
+  --bg: #fff;
 }
 
 html.dark {
-	--bg: var(--zinc-900);
-	color: #fff;
-	color-scheme: dark;
+  --bg: var(--zinc-900);
+  color: #fff;
+  color-scheme: dark;
 }
 
 body {
-	padding: 0 var(--size-2) var(--size-4);
+  padding: 0 var(--size-2) var(--size-4);
 }

@@ -13,7 +13,7 @@
 		"lint:tsc": "tsc --noEmit",
 		"lint:format": "prettier . --check",
 		"format": "prettier . --write",
-		"clean": "rimraf dist dist-vite .nitro .output node_modules/.cache",
+		"clean": "rm -rf dist dist-vite .nitro .output node_modules/.cache",
 		"prepare": "cross-env FORCE_COLOR=1 run-s -l prepare:*",
 		"prepare:husky": "husky",
 		"prepare:nitro": "nitropack prepare"
@@ -30,7 +30,6 @@
 		"nitropack": "^2.13.3",
 		"npm-run-all2": "^8.0.4",
 		"prettier": "^3.8.3",
-		"rimraf": "^6.1.3",
 		"sass": "^1.99.0",
 		"tailwind-vars": "^0.1.6",
 		"tiny-server-timing": "^0.1.6",

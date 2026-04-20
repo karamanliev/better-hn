@@ -1,6 +1,5 @@
 import { useSSRContext } from "~/lib/context";
 import { Link } from "./Link";
-import { GitHubIcon } from "./icons/GitHubIcon";
 import { MagnifyingGlassIcon } from "./icons/MagnifyingGlassIcon";
 import { MoonIcon } from "./icons/MoonIcon";
 import { PaperAirplaneIcon } from "./icons/PaperAirplaneIcon";
@@ -54,14 +53,6 @@ export const Header = () => {
 				<SunIcon className="iconLight" />
 				<MoonIcon className="iconDark" />
 			</button>
-			<a
-				className="iconButton iconButton__desktop"
-				title="Project source code"
-				href="https://github.com/pajecawav/better-hn"
-				rel="noreferrer noopener"
-			>
-				<GitHubIcon />
-			</a>
 		</header>
 	);
 };

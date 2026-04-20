@@ -1,6 +1,14 @@
 .comment {
+  scroll-margin-top: var(--size-2);
+
   &:not(:first-child) {
     margin-top: var(--size-2);
+  }
+}
+
+.topLevelComment {
+  & + & {
+    margin-top: var(--size-6);
   }
 }
 
@@ -9,6 +17,7 @@
 }
 
 .info {
+  scroll-margin-top: var(--size-2);
   color: var(--neutral-400);
 
   .user,
@@ -18,12 +27,6 @@
 
   .unfold {
     display: none;
-  }
-
-  @media (max-width: 639px) {
-    & {
-      scroll-margin-top: var(--size-12);
-    }
   }
 }
 

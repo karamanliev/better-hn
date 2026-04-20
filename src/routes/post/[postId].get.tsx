@@ -79,6 +79,7 @@ export default defineEventHandler(async (event) => {
             rootId={comment.id}
             prevId={post.comments[index - 1]?.id}
             nextId={post.comments[index + 1]?.id}
+            topLevel
           />
         ))}
       </>

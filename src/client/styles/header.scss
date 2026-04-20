@@ -8,13 +8,6 @@
 
   background: var(--bg);
 
-  @media (max-width: 639px) {
-    & {
-      position: sticky;
-      top: 0;
-    }
-  }
-
   .navigation {
     display: flex;
     align-items: center;

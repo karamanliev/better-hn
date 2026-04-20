@@ -10,6 +10,7 @@
 
 html {
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
   color-scheme: light;
 
   background: var(--bg);
@@ -25,4 +26,10 @@ html.dark {
 
 body {
   padding: 0 var(--size-2) var(--size-4);
+}
+
+@media (max-width: 639px) {
+  body {
+    padding-inline: var(--size-4);
+  }
 }

@@ -13,6 +13,9 @@ const getComment = (commentId: number) => {
     const isFolded = comment.dataset.folded === "true";
     comment.dataset.folded = String(!isFolded);
 
-    comment.querySelector(".info")?.scrollIntoView({ block: "nearest" });
+    comment.querySelector(".info")?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
   },
 };

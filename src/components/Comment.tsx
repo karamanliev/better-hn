@@ -8,6 +8,7 @@ interface CommentProps {
   parentId?: number;
   prevId?: number;
   nextId?: number;
+  topLevel?: boolean;
 }
 
 export const Comment = ({
@@ -16,11 +17,15 @@ export const Comment = ({
   parentId,
   prevId,
   nextId,
+  topLevel,
 }: CommentProps) => {
   const commentLink = (id: number) => `#comment-${id}`;
 
   return (
-    <article id={`comment-${comment.id}`} class="comment">
+    <article
+      id={`comment-${comment.id}`}
+      class={topLevel ? "comment topLevelComment" : "comment"}
+    >
       <div class="commentBody" tabindex={-1}>
         <p class="info">
           {comment.user && (

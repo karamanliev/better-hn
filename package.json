@@ -13,7 +13,7 @@
 		"lint:tsc": "tsc --noEmit",
 		"lint:format": "prettier . --check",
 		"format": "prettier . --write",
-		"clean": "rimraf dist dist-vite .nitro .output .vercel node_modules/.cache",
+		"clean": "rimraf dist dist-vite .nitro .output node_modules/.cache",
 		"prepare": "cross-env FORCE_COLOR=1 run-s -l prepare:*",
 		"prepare:husky": "husky",
 		"prepare:nitro": "nitropack prepare"
@@ -24,7 +24,6 @@
 		"@eslint/js": "^10.0.1",
 		"@pajecawav/prettier-config": "^1.0.0",
 		"@types/js-cookie": "^3.0.6",
-		"@vercel/analytics": "^2.0.1",
 		"cross-env": "^10.1.0",
 		"eslint": "^10.2.0",
 		"hono": "^4.12.12",

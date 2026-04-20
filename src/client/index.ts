@@ -1,4 +1,3 @@
-import "./analytics";
 import "./comments";
 import "./prefetch";
 import "./service-worker";

@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import {
 	DEFAULT_THEME,
 	THEME_COOKIE,
@@ -14,7 +13,10 @@ const systemThemeMedia = window.matchMedia("(prefers-color-scheme: dark)");
 const getPreferredDark = () => systemThemeMedia.matches;
 
 const getTheme = () => {
-	const storedTheme = Cookies.get(THEME_COOKIE);
+	const storedTheme = document.cookie
+		.split("; ")
+		.find(cookie => cookie.startsWith(`${THEME_COOKIE}=`))
+		?.slice(`${THEME_COOKIE}=`.length);
 
 	return isTheme(storedTheme) ? storedTheme : DEFAULT_THEME;
 };
@@ -28,7 +30,7 @@ const setTheme = (theme: Theme) => {
 	document
 		.querySelector('meta[name="theme-color"]')
 		?.setAttribute("content", getThemeColor(resolvedTheme));
-	Cookies.set(THEME_COOKIE, theme, { expires: 365 * 24 * 60 * 60, sameSite: "lax" });
+	document.cookie = `${THEME_COOKIE}=${theme};max-age=${365 * 24 * 60 * 60};samesite=lax;path=/`;
 };
 
 const updateTheme = () => {

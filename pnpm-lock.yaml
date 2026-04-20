@@ -20,9 +20,6 @@ importers:
       '@pajecawav/prettier-config':
         specifier: ^1.0.0
         version: 1.0.0
-      '@types/js-cookie':
-        specifier: ^3.0.6
-        version: 3.0.6
       cross-env:
         specifier: ^10.1.0
         version: 10.1.0
@@ -32,12 +29,6 @@ importers:
       hono:
         specifier: ^4.12.12
         version: 4.12.12
-      husky:
-        specifier: ^9.1.7
-        version: 9.1.7
-      js-cookie:
-        specifier: ^3.0.5
-        version: 3.0.5
       lint-staged:
         specifier: ^16.4.0
         version: 16.4.0
@@ -1462,9 +1453,6 @@ packages:
   '@types/estree@1.0.8':
     resolution: {integrity: sha512-dWHzHa2WqEXI/O1E9OjrocMTKJl2mSrEolh1Iomrv6U+JuNwaHXsXx9bLu5gG7BUWFIN0skIQJQ/L1rIex4X6w==}
 
-  '@types/js-cookie@3.0.6':
-    resolution: {integrity: sha512-wkw9yd1kEXOPnvEeEV1Go1MmxtBJL0RR79aOTAApecWFVu7w0NNXNqhcWgvw2YgZDYadliXkl14pa3WXw5jlCQ==}
-
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
@@ -2479,11 +2467,6 @@ packages:
   httpxy@0.5.0:
     resolution: {integrity: sha512-qwX7QX/rK2visT10/b7bSeZWQOMlSm3svTD0pZpU+vJjNUP0YHtNv4c3z+MO+MSnGuRFWJFdCZiV+7F7dXIOzg==}
 
-  husky@9.1.7:
-    resolution: {integrity: sha512-5gs5ytaNjBrh5Ow3zrvdUUY+0VxIuWVL4i9irt6friV+BqdCfmV11CQTWMiBYWHbXhco+J1kHfTOUkePhCDvMA==}
-    engines: {node: '>=18'}
-    hasBin: true
-
   idb@7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
 
@@ -2717,10 +2700,6 @@ packages:
   jiti@2.6.1:
     resolution: {integrity: sha512-ekilCSN1jwRvIbgeg/57YFh8qQDNbwDb9xT/qu2DAHbFFZUicIl4ygVaAvzveMhMVr3LnpSKTNnwt8PoOfmKhQ==}
     hasBin: true
-
-  js-cookie@3.0.5:
-    resolution: {integrity: sha512-cEiJEAEoIbWfCZYKWhVwFuvPX1gETRYPw6LlaTKoxD3s2AkXzkCjnp6h0V77ozyqj0jakteJ4YqDJT830+lVGw==}
-    engines: {node: '>=14'}
 
   js-tokens@4.0.0:
     resolution: {integrity: sha512-RdJUflcE3cUzKiMqQgsCu06FPu9UdIJO0beYbPhHN4k6apgJtifcoCtT9bcxOpYBtpD2kCM6Sbzg4CausW/PKQ==}
@@ -5593,8 +5572,6 @@ snapshots:
 
   '@types/estree@1.0.8': {}
 
-  '@types/js-cookie@3.0.6': {}
-
   '@types/json-schema@7.0.15': {}
 
   '@types/node@25.0.3':
@@ -6742,8 +6719,6 @@ snapshots:
 
   httpxy@0.5.0: {}
 
-  husky@9.1.7: {}
-
   idb@7.1.1: {}
 
   ieee754@1.2.1: {}
@@ -6961,8 +6936,6 @@ snapshots:
       picocolors: 1.1.1
 
   jiti@2.6.1: {}
-
-  js-cookie@3.0.5: {}
 
   js-tokens@4.0.0: {}
 

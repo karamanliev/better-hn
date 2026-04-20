@@ -1,0 +1,12 @@
+services:
+    web:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: better-hn:local
+        ports:
+            - "3000:3000"
+        environment:
+            NITRO_HOST: 0.0.0.0
+            NITRO_PORT: "3000"
+        restart: unless-stopped

@@ -5,6 +5,7 @@ import { MagnifyingGlassIcon } from "./icons/MagnifyingGlassIcon";
 import { MoonIcon } from "./icons/MoonIcon";
 import { PaperAirplaneIcon } from "./icons/PaperAirplaneIcon";
 import { SunIcon } from "./icons/SunIcon";
+import { SystemIcon } from "./icons/SystemIcon";
 
 const LINKS = [
 	{ title: "Top", href: "/top" },
@@ -49,6 +50,7 @@ export const Header = () => {
 				<MagnifyingGlassIcon />
 			</a>
 			<button className="iconButton" title="Toggle theme" onclick="UI.switchTheme()">
+				<SystemIcon className="iconSystem" />
 				<SunIcon className="iconLight" />
 				<MoonIcon className="iconDark" />
 			</button>

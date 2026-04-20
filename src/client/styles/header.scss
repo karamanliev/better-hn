@@ -58,6 +58,8 @@
 		}
 	}
 
+	.iconSystem,
+	.iconLight,
 	.iconDark {
 		display: none;
 	}
@@ -78,12 +80,20 @@
 	.iconButton:hover {
 		background: var(--neutral-800);
 	}
+}
 
-	.iconLight {
-		display: none;
-	}
+html[data-theme="system"] .header .iconSystem {
+	display: block;
+}
 
-	.iconDark {
-		display: block;
-	}
+html[data-theme="light"] .header .iconLight {
+	display: block;
+}
+
+html[data-theme="dark"] .header .iconDark {
+	display: block;
+}
+
+html:not([data-theme]) .header .iconSystem {
+	display: block;
 }

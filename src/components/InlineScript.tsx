@@ -1,34 +1,49 @@
 import { Theme, THEME_COOKIE } from "~/lib/theme";
 
+const themeCookiePrefix = `${THEME_COOKIE}=`;
+
 const script = `
 if (!("share" in navigator)) {
 	document.body.classList.add("noshare");
 }
 
 (function () {
-	function getTheme() {
+	function getStoredTheme() {
 		let storedTheme = undefined;
 
 		try {
-            storedTheme = document.cookie.split("${THEME_COOKIE}=")[1]?.split(";")[0];
+			const themeCookie = document.cookie
+				.split("; ")
+				.find(cookie => cookie.startsWith("${themeCookiePrefix}"));
+			storedTheme = themeCookie?.slice("${themeCookiePrefix}".length);
 		} catch {}
 
-		if (typeof storedTheme === "string") {
+		if (
+			storedTheme === "${Theme.SYSTEM}" ||
+			storedTheme === "${Theme.LIGHT}" ||
+			storedTheme === "${Theme.DARK}"
+		) {
 			return storedTheme;
 		}
 
-		const userMedia = window.matchMedia("(prefers-color-scheme: dark)");
-		if (userMedia?.matches) {
-			return "${Theme.DARK}";
+		return "${Theme.SYSTEM}";
+	}
+
+	function getResolvedTheme(theme) {
+		if (theme === "${Theme.SYSTEM}") {
+			const userMedia = window.matchMedia("(prefers-color-scheme: dark)");
+			return userMedia?.matches ? "${Theme.DARK}" : "${Theme.LIGHT}";
 		}
 
-		return "${Theme.LIGHT}";
+		return theme;
 	}
 
 	const root = document.documentElement;
-	const theme = getTheme();
+	const theme = getStoredTheme();
+	const resolvedTheme = getResolvedTheme(theme);
 
-	root.classList.toggle("dark", theme === "${Theme.DARK}");
+	root.dataset.theme = theme;
+	root.classList.toggle("dark", resolvedTheme === "${Theme.DARK}");
 })();
 `;
 

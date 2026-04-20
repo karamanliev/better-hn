@@ -6,7 +6,7 @@ export interface SSRContextValue {
 	url: URL;
 	title: string;
 	assets: Assets;
-	theme?: Theme;
+	theme: Theme;
 }
 
 export const SSRContext = createContext<SSRContextValue | null>(null);

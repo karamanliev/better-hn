@@ -5,7 +5,7 @@ import { ServerTiming } from "tiny-server-timing";
 import { getAssets } from "./assets";
 import { App } from "./components/App";
 import { SSRContext, SSRContextValue } from "./lib/context";
-import { DEFAULT_THEME, Theme, THEME_COOKIE } from "./lib/theme";
+import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "./lib/theme";
 
 interface RenderPageOptions {
 	title?: string;
@@ -18,7 +18,8 @@ export const renderPage = async (page: Child, { title, timing, event }: RenderPa
 
 	const assets = await getAssets();
 
-	const theme = (getCookie(event, THEME_COOKIE) ?? DEFAULT_THEME) as Theme;
+	const storedTheme = getCookie(event, THEME_COOKIE);
+	const theme = isTheme(storedTheme) ? storedTheme : DEFAULT_THEME;
 
 	// TODO: 103 early hints
 

@@ -205,33 +205,15 @@ const buildPaginatedHNUrl = (path: string, page: number) => {
   return `${HN_BASE_URL}${path}${separator}p=${page}`;
 };
 
-const scrapeItemIds = async (path: string, count: number) => {
-  const pages = Math.max(1, Math.ceil(count / PAGE_SIZE));
-  const ids = new Set<string>();
+const scrapeItemIds = async (path: string, page: number) => {
+  const url = buildPaginatedHNUrl(path, page);
+  const html = await getCached(url, () => fetchText(url));
+  const document = parse(html);
 
-  for (let page = 1; page <= pages; page += 1) {
-    const url = buildPaginatedHNUrl(path, page);
-    const html = await getCached(url, () => fetchText(url));
-    const document = parse(html);
-    const pageIds = document
-      .querySelectorAll("tr.athing")
-      .map((node) => node.getAttribute("id"))
-      .filter((id): id is string => Boolean(id));
-
-    if (pageIds.length === 0) {
-      break;
-    }
-
-    for (const id of pageIds) {
-      ids.add(id);
-    }
-
-    if (pageIds.length < PAGE_SIZE) {
-      break;
-    }
-  }
-
-  return [...ids].slice(0, count);
+  return document
+    .querySelectorAll("tr.athing")
+    .map((node) => node.getAttribute("id"))
+    .filter((id): id is string => Boolean(id));
 };
 
 const buildNumericFilters = (
@@ -254,6 +236,75 @@ const buildNumericFilters = (
   }
 
   return filters;
+};
+
+const orderHitsByIds = (ids: string[], hits: AlgoliaSearchHit[]) => {
+  const hitsById = new Map(hits.map((hit) => [hit.objectID, hit]));
+
+  return ids
+    .map((id) => hitsById.get(id))
+    .filter((hit): hit is AlgoliaSearchHit => Boolean(hit));
+};
+
+const buildSpecialFeedParams = (
+  feed: RSSFeedDefinition,
+  query: RSSQueryOptions,
+  ids: string[],
+) => {
+  const params = new URLSearchParams();
+  const numericFilters = buildNumericFilters(feed, query);
+
+  if (numericFilters.length > 0) {
+    params.set("numericFilters", numericFilters.join(","));
+  }
+
+  params.set("hitsPerPage", String(ids.length));
+
+  if (feed.source === "bestcomments") {
+    params.set(
+      "filters",
+      ids.map((id) => `objectID:"${id}"`).join(" OR "),
+    );
+
+    return params;
+  }
+
+  params.set("tags", `(story,poll),(${ids.map((id) => `story_${id}`).join(",")})`);
+
+  return params;
+};
+
+const fetchSpecialFeedHits = async (
+  feed: RSSFeedDefinition,
+  query: RSSQueryOptions,
+) => {
+  if (!feed.scrapePath) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Missing scrape path for ${feed.slug}`,
+    });
+  }
+
+  const hits: AlgoliaSearchHit[] = [];
+
+  for (let page = 1; hits.length < query.count; page += 1) {
+    const pageIds = await scrapeItemIds(feed.scrapePath, page);
+
+    if (pageIds.length === 0) {
+      break;
+    }
+
+    const params = buildSpecialFeedParams(feed, query, pageIds);
+    const pageHits = await fetchAlgolia(params);
+
+    hits.push(...orderHitsByIds(pageIds, pageHits));
+
+    if (pageIds.length < PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return hits;
 };
 
 const getAlgoliaHits = async (
@@ -281,33 +332,7 @@ const getAlgoliaHits = async (
     return fetchAlgolia(params);
   }
 
-  if (!feed.scrapePath) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: `Missing scrape path for ${feed.slug}`,
-    });
-  }
-
-  const ids = await scrapeItemIds(feed.scrapePath, query.count);
-
-  if (ids.length === 0) {
-    return [];
-  }
-
-  params.set("hitsPerPage", String(ids.length));
-
-  if (feed.source === "bestcomments") {
-    params.set(
-      "filters",
-      ids.map((id) => `objectID:"${id}"`).join(" OR "),
-    );
-
-    return fetchAlgolia(params);
-  }
-
-  params.set("tags", `(story,poll),(${ids.map((id) => `story_${id}`).join(",")})`);
-
-  return fetchAlgolia(params);
+  return fetchSpecialFeedHits(feed, query);
 };
 
 const buildCommentsUrl = (

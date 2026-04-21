@@ -51,51 +51,6 @@
     }
   }
 
-  .rssMenu {
-    position: relative;
-
-    summary {
-      display: block;
-      list-style: none;
-      cursor: pointer;
-    }
-
-    summary::-webkit-details-marker {
-      display: none;
-    }
-  }
-
-  .rssMenuPopover {
-    position: absolute;
-    top: calc(100% + var(--size-2));
-    right: 0;
-    z-index: 10;
-
-    display: grid;
-    min-width: 13rem;
-    padding: var(--size-2);
-    border: 1px solid var(--orange-200);
-    border-radius: var(--radius-lg);
-    background: var(--bg);
-    box-shadow: 0 10px 30px rgb(0 0 0 / 0.08);
-  }
-
-  .rssMenuLink,
-  .rssMenuIndex {
-    padding: var(--size-2);
-    border-radius: var(--radius-md);
-    transition: background-color 100ms;
-
-    &:hover {
-      background: var(--orange-100);
-    }
-  }
-
-  .rssMenuIndex {
-    margin-bottom: var(--size-1);
-    font-weight: 600;
-  }
-
   .iconSystem,
   .iconLight,
   .iconDark {
@@ -116,16 +71,6 @@
   }
 
   .iconButton:hover {
-    background: var(--neutral-800);
-  }
-
-  .rssMenuPopover {
-    border-color: var(--neutral-800);
-    box-shadow: 0 10px 30px rgb(0 0 0 / 0.24);
-  }
-
-  .rssMenuLink:hover,
-  .rssMenuIndex:hover {
     background: var(--neutral-800);
   }
 }

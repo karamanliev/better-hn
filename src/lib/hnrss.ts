@@ -142,7 +142,7 @@ export const parseRSSQuery = (
   const count = parsePositiveInt(query.count);
   const description = getSingleQueryValue(query.description);
   const link = getSingleQueryValue(query.link);
-  const isStoryFeed = feed.source !== "bestcomments";
+  const isStoryFeed = feed.source !== "comments";
   const linkTo = isStoryFeed && link === "comments" ? "comments" : "article";
   const minPoints = isStoryFeed ? parsePositiveInt(query.points) : undefined;
   const minComments = isStoryFeed ? parsePositiveInt(query.comments) : undefined;
@@ -205,15 +205,30 @@ const buildPaginatedHNUrl = (path: string, page: number) => {
   return `${HN_BASE_URL}${path}${separator}p=${page}`;
 };
 
-const scrapeItemIds = async (path: string, page: number) => {
-  const url = buildPaginatedHNUrl(path, page);
-  const html = await getCached(url, () => fetchText(url));
+const parseScrapedPage = (html: string) => {
   const document = parse(html);
 
-  return document
-    .querySelectorAll("tr.athing")
-    .map((node) => node.getAttribute("id"))
-    .filter((id): id is string => Boolean(id));
+  return {
+    ids: document
+      .querySelectorAll("tr.athing")
+      .map((node) => node.getAttribute("id"))
+      .filter((id): id is string => Boolean(id)),
+    nextPath: document.querySelector("a.morelink")?.getAttribute("href") ?? undefined,
+  };
+};
+
+const scrapePagedItemIds = async (path: string, page: number) => {
+  const url = buildPaginatedHNUrl(path, page);
+  const html = await getCached(url, () => fetchText(url));
+
+  return parseScrapedPage(html).ids;
+};
+
+const scrapeCursorItemIds = async (path: string) => {
+  const url = new URL(path, HN_BASE_URL).toString();
+  const html = await getCached(url, () => fetchText(url));
+
+  return parseScrapedPage(html);
 };
 
 const buildNumericFilters = (
@@ -260,7 +275,7 @@ const buildSpecialFeedParams = (
 
   params.set("hitsPerPage", String(ids.length));
 
-  if (feed.source === "bestcomments") {
+  if (feed.source === "comments") {
     params.set(
       "filters",
       ids.map((id) => `objectID:"${id}"`).join(" OR "),
@@ -287,8 +302,33 @@ const fetchSpecialFeedHits = async (
 
   const hits: AlgoliaSearchHit[] = [];
 
+  if (feed.slug === "highlights") {
+    let nextPath = feed.scrapePath;
+
+    while (nextPath && hits.length < query.count) {
+      const scrapedPage = await scrapeCursorItemIds(nextPath);
+
+      if (scrapedPage.ids.length === 0) {
+        break;
+      }
+
+      const params = buildSpecialFeedParams(feed, query, scrapedPage.ids);
+      const pageHits = await fetchAlgolia(params);
+
+      hits.push(...orderHitsByIds(scrapedPage.ids, pageHits));
+
+      if (scrapedPage.ids.length < PAGE_SIZE) {
+        break;
+      }
+
+      nextPath = scrapedPage.nextPath;
+    }
+
+    return hits;
+  }
+
   for (let page = 1; hits.length < query.count; page += 1) {
-    const pageIds = await scrapeItemIds(feed.scrapePath, page);
+    const pageIds = await scrapePagedItemIds(feed.scrapePath, page);
 
     if (pageIds.length === 0) {
       break;
@@ -434,7 +474,7 @@ export const buildRSSFeedXML = async (
   const visibleHits = hits.slice(0, query.count);
   let items: RSSItem[];
 
-  if (feed.source === "bestcomments") {
+  if (feed.source === "comments") {
     items = visibleHits.map((hit) => buildCommentItem(hit, requestUrl.origin, query));
   } else {
     items = visibleHits.map((hit) => buildStoryItem(hit, requestUrl.origin, query));

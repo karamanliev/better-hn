@@ -7,6 +7,7 @@ export type RSSFeedSlug =
   | "classic"
   | "best"
   | "active"
+  | "highlights"
   | "bestcomments";
 
 export type RSSFeedCategory =
@@ -21,7 +22,7 @@ export interface RSSFeedDefinition {
   summary: string;
   category: RSSFeedCategory;
   channelLink: string;
-  source: "algolia" | "special" | "bestcomments";
+  source: "algolia" | "special" | "comments";
   algoliaTags?: string;
   scrapePath?: string;
   topicName?: string;
@@ -105,12 +106,21 @@ export const RSS_FEEDS: RSSFeedDefinition[] = [
     scrapePath: "/active",
   },
   {
+    slug: "highlights",
+    title: "Highlights",
+    summary: "Hand-curated standout comments and subthreads from Hacker News.",
+    category: "Comments",
+    channelLink: "https://news.ycombinator.com/highlights",
+    source: "comments",
+    scrapePath: "/highlights",
+  },
+  {
     slug: "bestcomments",
     title: "Best Comments",
     summary: "Recent highly voted comments from across Hacker News.",
     category: "Comments",
     channelLink: "https://news.ycombinator.com/bestcomments",
-    source: "bestcomments",
+    source: "comments",
     scrapePath: "/bestcomments",
   },
 ];

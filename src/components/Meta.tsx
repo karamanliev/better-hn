@@ -12,7 +12,7 @@ const SPECULATION_RULES = {
 };
 
 export const Meta = () => {
-  const { title, theme, assets } = useSSRContext();
+  const { title, theme, assets, rss } = useSSRContext();
 
   return (
     <head>
@@ -34,6 +34,15 @@ export const Meta = () => {
       <link rel="manifest" href="/manifest.webmanifest" />
 
       <title>{buildPageTitle(title)}</title>
+
+      {rss && (
+        <link
+          rel="alternate"
+          type="application/rss+xml"
+          title={rss.title}
+          href={rss.href}
+        />
+      )}
 
       {assets.css.map((href) => (
         <link rel="stylesheet" href={href} />

@@ -1,5 +1,6 @@
 import { ServerTiming } from "tiny-server-timing";
 import { FeedItem } from "~/components/FeedItem";
+import { getRSSFeedPath, getTopicRSSFeed } from "~/lib/rss";
 import { TOPICS, TopicItem } from "~/lib/topic";
 import { renderPage } from "~/render";
 
@@ -9,6 +10,7 @@ export default defineEventHandler(async (event) => {
   const topicName = getRouterParam(event, "topicName");
   const topic = TOPICS.find((t) => t.name === topicName);
   const page = Number(getQuery(event).page ?? "1");
+  const rssFeed = topic ? getTopicRSSFeed(topic.name) : undefined;
 
   // TODO: better validation?
   if (!topic || Number.isNaN(page) || page < 1) {
@@ -32,6 +34,10 @@ export default defineEventHandler(async (event) => {
 
   return renderPage(
     <>
+      <div className="feedHeader">
+        <h1 className="feedTitle">{topic.title}</h1>
+      </div>
+
       <div className="feed">
         {items.map((item, index) => (
           <FeedItem
@@ -45,6 +51,16 @@ export default defineEventHandler(async (event) => {
         More...
       </a>
     </>,
-    { event, timing },
+    {
+      title: topic.title,
+      event,
+      timing,
+      rss: rssFeed
+        ? {
+            href: getRSSFeedPath(rssFeed.slug),
+            title: `Better HN: ${rssFeed.title}`,
+          }
+        : undefined,
+    },
   );
 });

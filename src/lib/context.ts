@@ -2,11 +2,17 @@ import { createContext, useContext } from "hono/jsx";
 import { Theme } from "./theme";
 import { Assets } from "~/assets";
 
+export interface RSSMetadata {
+  href: string;
+  title: string;
+}
+
 export interface SSRContextValue {
   url: URL;
-  title: string;
+  title?: string;
   assets: Assets;
   theme: Theme;
+  rss?: RSSMetadata;
 }
 
 export const SSRContext = createContext<SSRContextValue | null>(null);

@@ -1,8 +1,10 @@
 import { useSSRContext } from "~/lib/context";
+import { RSS_FEEDS, getRSSFeedPath } from "~/lib/rss";
 import { Link } from "./Link";
 import { MagnifyingGlassIcon } from "./icons/MagnifyingGlassIcon";
 import { MoonIcon } from "./icons/MoonIcon";
 import { PaperAirplaneIcon } from "./icons/PaperAirplaneIcon";
+import { RssIcon } from "./icons/RssIcon";
 import { SunIcon } from "./icons/SunIcon";
 import { SystemIcon } from "./icons/SystemIcon";
 
@@ -40,6 +42,27 @@ export const Header = () => {
       >
         <PaperAirplaneIcon />
       </button>
+      <details class="rssMenu">
+        <summary class="iconButton" title="RSS feeds" aria-label="RSS feeds">
+          <RssIcon />
+        </summary>
+
+        <div class="rssMenuPopover">
+          <Link className="rssMenuIndex" href="/rss" isActive={url.pathname === "/rss"}>
+            RSS index
+          </Link>
+
+          {RSS_FEEDS.map((feed) => {
+            const feedPath = getRSSFeedPath(feed.slug);
+
+            return (
+              <Link className="rssMenuLink" href={feedPath} key={feed.slug}>
+                {feed.title}
+              </Link>
+            );
+          })}
+        </div>
+      </details>
       <a
         className="iconButton"
         title="Search Hacker News"

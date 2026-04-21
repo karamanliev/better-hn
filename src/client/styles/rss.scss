@@ -1,0 +1,124 @@
+.rssPage {
+  display: grid;
+  gap: var(--size-6);
+}
+
+.rssHero,
+.rssSection {
+  display: grid;
+  gap: var(--size-3);
+}
+
+.rssHeroNote,
+.rssSectionIntro,
+.rssHero p,
+.rssFeedCard p {
+  color: var(--neutral-500);
+}
+
+.rssHero code,
+.rssSectionIntro code {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: var(--radius-md);
+  background: var(--orange-100);
+  color: var(--orange-700);
+  overflow-wrap: anywhere;
+}
+
+.rssParametersSection {
+  margin-top: var(--size-2);
+}
+
+.rssParameterList {
+  display: grid;
+  gap: var(--size-3);
+}
+
+.rssParameterHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-3);
+  flex-wrap: wrap;
+}
+
+.rssParameterHeader h3 {
+  font-size: var(--font-size-base);
+  font-weight: 400;
+}
+
+.rssParameterHeader h3 code {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--neutral-700);
+}
+
+.rssParameterScope {
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--neutral-600);
+  font-size: var(--font-size-sm);
+}
+
+.rssParameterExample {
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--neutral-700);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+.rssFeedList {
+  display: grid;
+  gap: var(--size-3);
+}
+
+.rssFeedCard {
+  display: grid;
+  gap: var(--size-2);
+  padding: var(--size-4);
+  border: 1px solid var(--orange-200);
+  border-radius: var(--radius-lg);
+}
+
+.rssFeedCard.parameter {
+  border-color: var(--blue-100);
+}
+
+.rssFeedCardHeader {
+  display: grid;
+  gap: var(--size-1);
+}
+
+.rssFeedUrl {
+  width: fit-content;
+  color: var(--orange-600);
+  text-decoration: underline;
+  overflow-wrap: anywhere;
+}
+
+.dark .rssHero code,
+.dark .rssSectionIntro code,
+.dark .rssParameterHeader h3 code {
+  background: var(--neutral-800);
+  color: var(--orange-300);
+}
+
+.dark .rssFeedCard {
+  border-color: var(--neutral-800);
+}
+
+.dark .rssFeedCard.parameter {
+  border-color: var(--cyan-950);
+}
+
+.dark .rssParameterScope,
+.dark .rssParameterExample {
+  color: var(--neutral-300);
+}

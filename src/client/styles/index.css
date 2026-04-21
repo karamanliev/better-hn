@@ -3,6 +3,7 @@
 
 @import "./layout.scss";
 @import "./header.scss";
+@import "./rss.scss";
 @import "./topic.scss";
 @import "./user.scss";
 @import "./post.scss";
@@ -26,6 +27,18 @@ html.dark {
 
 body {
   padding: 0 var(--size-2) var(--size-4);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 639px) {

@@ -4,9 +4,11 @@
     "build": "cross-env FORCE_COLOR=1 run-s -l prepare:nitro build:vite build:nitro",
     "build:vite": "vite build",
     "build:nitro": "nitro build",
-    "dev": "cross-env FORCE_COLOR=1 npm-run-all -l -s prepare:nitro -p dev:*",
+    "dev": "cross-env FORCE_COLOR=1 npm-run-all -l -s prepare:nitro -p dev:vite dev:nitro",
+    "dev:public": "cross-env FORCE_COLOR=1 npm-run-all -l -s prepare:nitro -p dev:vite dev:nitro:public",
     "dev:vite": "vite --watch build",
     "dev:nitro": "cross-env NODE_OPTIONS=--enable-source-maps nitro dev",
+    "dev:nitro:public": "cross-env NODE_OPTIONS=--enable-source-maps nitro dev --host 0.0.0.0",
     "preview": "cross-env NODE_OPTIONS=--enable-source-maps node .output/server/index.mjs",
     "lint": "cross-env FORCE_COLOR=1 run-p -l lint:*",
     "lint:eslint": "eslint .",
@@ -16,6 +18,9 @@
     "clean": "rm -rf dist dist-vite .nitro .output node_modules/.cache",
     "prepare": "nitropack prepare",
     "prepare:nitro": "nitropack prepare"
+  },
+  "dependencies": {
+    "node-html-parser": "^7.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

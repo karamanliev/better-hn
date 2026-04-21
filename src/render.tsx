@@ -4,18 +4,19 @@ import { renderToString } from "hono/jsx/dom/server";
 import { ServerTiming } from "tiny-server-timing";
 import { getAssets } from "./assets";
 import { App } from "./components/App";
-import { SSRContext, SSRContextValue } from "./lib/context";
+import { RSSMetadata, SSRContext, SSRContextValue } from "./lib/context";
 import { DEFAULT_THEME, THEME_COOKIE, isTheme } from "./lib/theme";
 
 interface RenderPageOptions {
   title?: string;
   timing: ServerTiming;
   event: H3Event<EventHandlerRequest>;
+  rss?: RSSMetadata;
 }
 
 export const renderPage = async (
   page: Child,
-  { title, timing, event }: RenderPageOptions,
+  { title, timing, event, rss }: RenderPageOptions,
 ) => {
   timing.start("render");
 
@@ -31,6 +32,7 @@ export const renderPage = async (
     title,
     assets,
     theme,
+    rss,
   };
 
   const html = renderToString(

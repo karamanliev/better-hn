@@ -209,25 +209,7 @@ const escapeHtml = (value: string) =>
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
 
-const formatCompactNumber = (value: number) => {
-  const absoluteValue = Math.abs(value);
-
-  if (absoluteValue >= 1_000_000_000) {
-    return `${(value / 1_000_000_000).toFixed(1)}b`;
-  }
-
-  if (absoluteValue >= 1_000_000) {
-    return `${(value / 1_000_000).toFixed(1)}m`;
-  }
-
-  if (absoluteValue >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}k`;
-  }
-
-  return value.toLocaleString("en-US");
-};
-
-const formatCount = (value: number) => value.toLocaleString("en-US");
+const formatPlainNumber = (value: number) => String(value);
 
 const getExternalArticleUrl = (value?: string | null) => {
   if (!value) {
@@ -596,7 +578,7 @@ const buildStoryDescription = (
   const descriptionParts: string[] = [];
 
   descriptionParts.push(
-    `<p>Points: <strong>${escapeHtml(formatCompactNumber(hit.points ?? 0))}</strong> | Comments: <strong>${escapeHtml(formatCount(hit.num_comments ?? 0))}</strong> | submitted by ${buildStrongUserLink(origin, hit.author)}</p>`,
+    `<p>Points: <strong>${escapeHtml(formatPlainNumber(hit.points ?? 0))}</strong> | Comments: <strong>${escapeHtml(formatPlainNumber(hit.num_comments ?? 0))}</strong> | submitted by ${buildStrongUserLink(origin, hit.author)}</p>`,
   );
 
   descriptionParts.push(

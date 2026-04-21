@@ -81,16 +81,16 @@ const xmlEscape = (value: string) =>
 
 const cdata = (value: string) => `<![CDATA[${value.replaceAll("]]>", "]]]]><![CDATA[>")}]]>`;
 
-const toRSSDate = (date: Date) => date.toUTCString().replace("GMT", "+0000");
+const formatUTC = (date: Date) => date.toUTCString().replace("GMT", "+0000");
 
-const formatRSSDate = (value: string) => {
-  const date = new Date(value);
+const toRSSDate = (value: Date | string) => {
+  const date = typeof value === "string" ? new Date(value) : value;
 
   if (Number.isNaN(date.getTime())) {
-    return toRSSDate(new Date());
+    return formatUTC(new Date());
   }
 
-  return toRSSDate(date);
+  return formatUTC(date);
 };
 
 const decodeText = (value?: string | null) => {
@@ -217,15 +217,10 @@ const parseScrapedPage = (html: string) => {
   };
 };
 
-const scrapePagedItemIds = async (path: string, page: number) => {
-  const url = buildPaginatedHNUrl(path, page);
-  const html = await getCached(url, () => fetchText(url));
-
-  return parseScrapedPage(html).ids;
-};
-
-const scrapeCursorItemIds = async (path: string) => {
-  const url = new URL(path, HN_BASE_URL).toString();
+const scrapePage = async (path: string, page?: number) => {
+  const url = page === undefined
+    ? new URL(path, HN_BASE_URL).toString()
+    : buildPaginatedHNUrl(path, page);
   const html = await getCached(url, () => fetchText(url));
 
   return parseScrapedPage(html);
@@ -276,17 +271,28 @@ const buildSpecialFeedParams = (
   params.set("hitsPerPage", String(ids.length));
 
   if (feed.source === "comments") {
-    params.set(
-      "filters",
-      ids.map((id) => `objectID:"${id}"`).join(" OR "),
-    );
-
-    return params;
+    params.set("filters", ids.map((id) => `objectID:"${id}"`).join(" OR "));
+  } else {
+    params.set("tags", `(story,poll),(${ids.map((id) => `story_${id}`).join(",")})`);
   }
 
-  params.set("tags", `(story,poll),(${ids.map((id) => `story_${id}`).join(",")})`);
-
   return params;
+};
+
+const addPageHits = async (
+  hits: AlgoliaSearchHit[],
+  feed: RSSFeedDefinition,
+  query: RSSQueryOptions,
+  ids: string[],
+) => {
+  if (ids.length === 0) {
+    return;
+  }
+
+  const params = buildSpecialFeedParams(feed, query, ids);
+  const pageHits = await fetchAlgolia(params);
+
+  hits.push(...orderHitsByIds(ids, pageHits));
 };
 
 const fetchSpecialFeedHits = async (
@@ -306,40 +312,34 @@ const fetchSpecialFeedHits = async (
     let nextPath = feed.scrapePath;
 
     while (nextPath && hits.length < query.count) {
-      const scrapedPage = await scrapeCursorItemIds(nextPath);
+      const scraped = await scrapePage(nextPath);
 
-      if (scrapedPage.ids.length === 0) {
+      if (scraped.ids.length === 0) {
         break;
       }
 
-      const params = buildSpecialFeedParams(feed, query, scrapedPage.ids);
-      const pageHits = await fetchAlgolia(params);
+      await addPageHits(hits, feed, query, scraped.ids);
 
-      hits.push(...orderHitsByIds(scrapedPage.ids, pageHits));
-
-      if (scrapedPage.ids.length < PAGE_SIZE) {
+      if (scraped.ids.length < PAGE_SIZE) {
         break;
       }
 
-      nextPath = scrapedPage.nextPath;
+      nextPath = scraped.nextPath;
     }
 
     return hits;
   }
 
   for (let page = 1; hits.length < query.count; page += 1) {
-    const pageIds = await scrapePagedItemIds(feed.scrapePath, page);
+    const scraped = await scrapePage(feed.scrapePath, page);
 
-    if (pageIds.length === 0) {
+    if (scraped.ids.length === 0) {
       break;
     }
 
-    const params = buildSpecialFeedParams(feed, query, pageIds);
-    const pageHits = await fetchAlgolia(params);
+    await addPageHits(hits, feed, query, scraped.ids);
 
-    hits.push(...orderHitsByIds(pageIds, pageHits));
-
-    if (pageIds.length < PAGE_SIZE) {
+    if (scraped.ids.length < PAGE_SIZE) {
       break;
     }
   }
@@ -430,7 +430,7 @@ const buildStoryItem = (
     comments: commentsUrl,
     guid: `${HN_ITEM_URL}${hit.objectID}`,
     author: hit.author,
-    pubDate: formatRSSDate(hit.created_at),
+    pubDate: toRSSDate(hit.created_at),
   };
 };
 
@@ -451,7 +451,7 @@ const buildCommentItem = (
     comments: commentsUrl,
     guid: `${HN_ITEM_URL}${hit.objectID}`,
     author: hit.author,
-    pubDate: formatRSSDate(hit.created_at),
+    pubDate: toRSSDate(hit.created_at),
   };
 };
 
@@ -472,13 +472,8 @@ export const buildRSSFeedXML = async (
 ) => {
   const hits = await getAlgoliaHits(feed, query);
   const visibleHits = hits.slice(0, query.count);
-  let items: RSSItem[];
-
-  if (feed.source === "comments") {
-    items = visibleHits.map((hit) => buildCommentItem(hit, requestUrl.origin, query));
-  } else {
-    items = visibleHits.map((hit) => buildStoryItem(hit, requestUrl.origin, query));
-  }
+  const buildItem = feed.source === "comments" ? buildCommentItem : buildStoryItem;
+  const items = visibleHits.map((hit) => buildItem(hit, requestUrl.origin, query));
 
   const lastBuildDate = toRSSDate(new Date());
   const docsUrl = `${requestUrl.origin}/rss`;

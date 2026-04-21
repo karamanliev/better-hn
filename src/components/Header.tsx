@@ -41,7 +41,12 @@ export const Header = () => {
       >
         <PaperAirplaneIcon />
       </button>
-      <Link className="iconButton" href="/rss" title="RSS feeds" aria-label="RSS feeds">
+      <Link
+        className="iconButton"
+        href="/rss"
+        title="RSS feeds"
+        aria-label="RSS feeds"
+      >
         <RssIcon />
       </Link>
       <a

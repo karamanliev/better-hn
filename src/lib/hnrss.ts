@@ -88,7 +88,8 @@ const xmlEscape = (value: string) =>
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
 
-const cdata = (value: string) => `<![CDATA[${value.replaceAll("]]>", "]]]]><![CDATA[>")}]]>`;
+const cdata = (value: string) =>
+  `<![CDATA[${value.replaceAll("]]>", "]]]]><![CDATA[>")}]]>`;
 
 const formatUTC = (date: Date) => date.toUTCString().replace("GMT", "+0000");
 
@@ -162,7 +163,8 @@ const rewriteHackerNewsHref = (href: string, origin: string) => {
   }
 };
 
-const HN_TEXT_URL_REGEXP = /https?:\/\/news\.ycombinator\.com\S+|news\.ycombinator\.com\S+/g;
+const HN_TEXT_URL_REGEXP =
+  /https?:\/\/news\.ycombinator\.com\S+|news\.ycombinator\.com\S+/g;
 
 const rewriteHackerNewsText = (text: string, origin: string) =>
   text.replace(HN_TEXT_URL_REGEXP, (match) => {
@@ -263,7 +265,10 @@ const buildStrongUserLink = (origin: string, author: string) =>
 
 const wrapBracketLinksLine = (links: Array<{ href: string; label: string }>) =>
   `<p>${links
-    .map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`)
+    .map(
+      ({ href, label }) =>
+        `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`,
+    )
     .map((link) => `[${link}]`)
     .join(" ")}</p>`;
 
@@ -304,7 +309,9 @@ export const parseRSSQuery = (
   const linkTo = isStoryFeed && link === "comments" ? "comments" : "article";
   const descriptionMode = parseDescriptionMode(query.description);
   const minPoints = isStoryFeed ? parsePositiveInt(query.points) : undefined;
-  const minComments = isStoryFeed ? parsePositiveInt(query.comments) : undefined;
+  const minComments = isStoryFeed
+    ? parsePositiveInt(query.comments)
+    : undefined;
 
   return {
     count: clampCount(count),
@@ -349,7 +356,9 @@ const fetchJSON = async <T>(url: string) => {
 const fetchAlgolia = async (params: URLSearchParams) => {
   const url = `${ALGOLIA_SEARCH_URL}?${params.toString()}`;
 
-  const response = await getCached(url, () => fetchJSON<AlgoliaSearchResponse>(url));
+  const response = await getCached(url, () =>
+    fetchJSON<AlgoliaSearchResponse>(url),
+  );
 
   return response.hits ?? [];
 };
@@ -372,14 +381,16 @@ const parseScrapedPage = (html: string) => {
       .querySelectorAll("tr.athing")
       .map((node) => node.getAttribute("id"))
       .filter((id): id is string => Boolean(id)),
-    nextPath: document.querySelector("a.morelink")?.getAttribute("href") ?? undefined,
+    nextPath:
+      document.querySelector("a.morelink")?.getAttribute("href") ?? undefined,
   };
 };
 
 const scrapePage = async (path: string, page?: number) => {
-  const url = page === undefined
-    ? new URL(path, HN_BASE_URL).toString()
-    : buildPaginatedHNUrl(path, page);
+  const url =
+    page === undefined
+      ? new URL(path, HN_BASE_URL).toString()
+      : buildPaginatedHNUrl(path, page);
   const html = await getCached(url, () => fetchText(url));
 
   return parseScrapedPage(html);
@@ -432,7 +443,10 @@ const buildSpecialFeedParams = (
   if (feed.source === "comments") {
     params.set("filters", ids.map((id) => `objectID:"${id}"`).join(" OR "));
   } else {
-    params.set("tags", `(story,poll),(${ids.map((id) => `story_${id}`).join(",")})`);
+    params.set(
+      "tags",
+      `(story,poll),(${ids.map((id) => `story_${id}`).join(",")})`,
+    );
   }
 
   return params;
@@ -585,7 +599,9 @@ const buildStoryDescription = (
     `<p>Points: <strong>${escapeHtml(formatCompactNumber(hit.points ?? 0))}</strong> | Comments: <strong>${escapeHtml(formatCount(hit.num_comments ?? 0))}</strong> | submitted by ${buildStrongUserLink(origin, hit.author)}</p>`,
   );
 
-  descriptionParts.push(buildDescriptionLinksLine(commentsUrl, "comments", articleUrl));
+  descriptionParts.push(
+    buildDescriptionLinksLine(commentsUrl, "comments", articleUrl),
+  );
   appendDescriptionBody(descriptionParts, query.descriptionMode, storyText);
 
   return descriptionParts.join("\n");
@@ -619,7 +635,9 @@ const buildCommentDescription = (
     `<p>submitted by ${buildStrongUserLink(origin, hit.author)}</p>`,
   );
 
-  descriptionParts.push(buildDescriptionLinksLine(commentUrl, "comment", storyUrl));
+  descriptionParts.push(
+    buildDescriptionLinksLine(commentUrl, "comment", storyUrl),
+  );
   appendDescriptionBody(descriptionParts, query.descriptionMode, commentText);
 
   return descriptionParts.join("\n");
@@ -670,7 +688,8 @@ const buildCommentItem = (
   };
 };
 
-const buildChannelTitle = (feed: RSSFeedDefinition) => `Hacker News: ${feed.title}`;
+const buildChannelTitle = (feed: RSSFeedDefinition) =>
+  `Hacker News: ${feed.title}`;
 
 const buildItemDescriptionXML = (description?: string) => {
   if (!description) {
@@ -687,8 +706,11 @@ export const buildRSSFeedXML = async (
 ) => {
   const hits = await getAlgoliaHits(feed, query);
   const visibleHits = hits.slice(0, query.count);
-  const buildItem = feed.source === "comments" ? buildCommentItem : buildStoryItem;
-  const items = visibleHits.map((hit) => buildItem(hit, requestUrl.origin, query));
+  const buildItem =
+    feed.source === "comments" ? buildCommentItem : buildStoryItem;
+  const items = visibleHits.map((hit) =>
+    buildItem(hit, requestUrl.origin, query),
+  );
 
   const lastBuildDate = toRSSDate(new Date());
   const docsUrl = `${requestUrl.origin}/rss`;

@@ -4,6 +4,14 @@ import { RSSFeedDefinition } from "./rss";
 const ALGOLIA_SEARCH_URL = "https://hn.algolia.com/api/v1/search_by_date";
 const HN_BASE_URL = "https://news.ycombinator.com";
 const HN_ITEM_URL = `${HN_BASE_URL}/item?id=`;
+const HN_HOSTNAME = new URL(HN_BASE_URL).hostname;
+const HN_PATH_REWRITES: Record<string, string> = {
+  "/": "/",
+  "/news": "/",
+  "/newest": "/new",
+  "/ask": "/ask",
+  "/show": "/show",
+};
 const CACHE_TTL_MS = 120_000;
 const DEFAULT_COUNT = 30;
 const MAX_COUNT = 100;
@@ -26,6 +34,7 @@ interface AlgoliaSearchHit {
   author: string;
   created_at: string;
   story_title?: string | null;
+  story_url?: string | null;
   story_text?: string | null;
   comment_text?: string | null;
   num_comments?: number | null;
@@ -45,7 +54,7 @@ interface RSSItem {
 
 export interface RSSQueryOptions {
   count: number;
-  includeDescription: boolean;
+  descriptionMode: "meta" | "full" | "none";
   linkTo: "article" | "comments";
   minPoints?: number;
   minComments?: number;
@@ -101,12 +110,94 @@ const decodeText = (value?: string | null) => {
   return parse(`<span>${value}</span>`).textContent;
 };
 
-const normalizeHtml = (value?: string | null) => {
+const parseDescriptionMode = (
+  value: unknown,
+): RSSQueryOptions["descriptionMode"] => {
+  const raw = getSingleQueryValue(value);
+
+  switch (raw) {
+    case "full":
+    case "meta":
+    case "none":
+      return raw;
+    case "0":
+      return "none";
+    default:
+      return "full";
+  }
+};
+
+const clampCount = (count?: number) =>
+  Math.min(Math.max(count ?? DEFAULT_COUNT, 1), MAX_COUNT);
+
+const rewriteHackerNewsHref = (href: string, origin: string) => {
+  try {
+    const url = new URL(href, HN_BASE_URL);
+
+    if (url.hostname !== HN_HOSTNAME) {
+      return href;
+    }
+
+    if (url.pathname === "/item") {
+      const id = url.searchParams.get("id");
+
+      return id ? `${origin}/post/${id}${url.hash}` : href;
+    }
+
+    if (url.pathname === "/user") {
+      const id = url.searchParams.get("id");
+
+      return id ? `${origin}/user/${encodeURIComponent(id)}` : href;
+    }
+
+    const rewrittenPath = HN_PATH_REWRITES[url.pathname];
+
+    if (rewrittenPath !== undefined) {
+      return `${origin}${rewrittenPath}`;
+    }
+
+    return `${origin}${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return href;
+  }
+};
+
+const HN_TEXT_URL_REGEXP = /https?:\/\/news\.ycombinator\.com\S+|news\.ycombinator\.com\S+/g;
+
+const rewriteHackerNewsText = (text: string, origin: string) =>
+  text.replace(HN_TEXT_URL_REGEXP, (match) => {
+    const href = match.startsWith("http") ? match : `https://${match}`;
+
+    return rewriteHackerNewsHref(href, origin);
+  });
+
+const normalizeHtml = (value?: string | null, origin?: string) => {
   if (!value) {
     return "";
   }
 
-  return parse(`<div>${value}</div>`).querySelector("div")?.innerHTML ?? value;
+  const root = parse(`<div>${value}</div>`).querySelector("div");
+
+  if (!root) {
+    return value;
+  }
+
+  if (origin) {
+    for (const link of root.querySelectorAll("a")) {
+      const href = link.getAttribute("href");
+
+      if (!href) {
+        continue;
+      }
+
+      const rewrittenHref = rewriteHackerNewsHref(href, origin);
+
+      link.setAttribute("href", rewrittenHref);
+      link.textContent = rewriteHackerNewsText(link.textContent, origin);
+    }
+  }
+
+  return root.innerHTML;
 };
 
 const escapeHtml = (value: string) =>
@@ -115,6 +206,74 @@ const escapeHtml = (value: string) =>
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+
+const formatCompactNumber = (value: number) => {
+  const absoluteValue = Math.abs(value);
+
+  if (absoluteValue >= 1_000_000_000) {
+    return `${(value / 1_000_000_000).toFixed(1)}b`;
+  }
+
+  if (absoluteValue >= 1_000_000) {
+    return `${(value / 1_000_000).toFixed(1)}m`;
+  }
+
+  if (absoluteValue >= 1_000) {
+    return `${(value / 1_000).toFixed(1)}k`;
+  }
+
+  return value.toLocaleString("en-US");
+};
+
+const formatCount = (value: number) => value.toLocaleString("en-US");
+
+const getExternalArticleUrl = (value?: string | null) => {
+  if (!value) {
+    return undefined;
+  }
+
+  try {
+    const url = new URL(value);
+
+    return url.hostname === HN_HOSTNAME ? undefined : url.toString();
+  } catch {
+    return undefined;
+  }
+};
+
+const getDisplayDomain = (value?: string | null) => {
+  const articleUrl = getExternalArticleUrl(value);
+
+  if (!articleUrl) {
+    return undefined;
+  }
+
+  try {
+    return new URL(articleUrl).hostname.replace(/^www\./, "");
+  } catch {
+    return undefined;
+  }
+};
+
+const buildUserLink = (origin: string, author: string) =>
+  `<a href="${escapeHtml(`${origin}/user/${encodeURIComponent(author)}`)}">${escapeHtml(author)}</a>`;
+
+const buildStrongUserLink = (origin: string, author: string) =>
+  `<strong>${buildUserLink(origin, author)}</strong>`;
+
+const wrapBracketLinksLine = (links: Array<{ href: string; label: string }>) =>
+  `<p>${links
+    .map(({ href, label }) => `<a href="${escapeHtml(href)}">${escapeHtml(label)}</a>`)
+    .map((link) => `[${link}]`)
+    .join(" ")}</p>`;
+
+const appendDomainToTitle = (title: string, domain?: string) => {
+  if (!domain) {
+    return title;
+  }
+
+  return `${title} (${domain})`;
+};
 
 const getSingleQueryValue = (value: unknown) =>
   Array.isArray(value) ? value[0] : value;
@@ -140,16 +299,16 @@ export const parseRSSQuery = (
   feed: RSSFeedDefinition,
 ): RSSQueryOptions => {
   const count = parsePositiveInt(query.count);
-  const description = getSingleQueryValue(query.description);
   const link = getSingleQueryValue(query.link);
   const isStoryFeed = feed.source !== "comments";
   const linkTo = isStoryFeed && link === "comments" ? "comments" : "article";
+  const descriptionMode = parseDescriptionMode(query.description);
   const minPoints = isStoryFeed ? parsePositiveInt(query.points) : undefined;
   const minComments = isStoryFeed ? parsePositiveInt(query.comments) : undefined;
 
   return {
-    count: Math.min(Math.max(count ?? DEFAULT_COUNT, 1), MAX_COUNT),
-    includeDescription: description !== "0",
+    count: clampCount(count),
+    descriptionMode,
     linkTo,
     minPoints,
     minComments,
@@ -381,36 +540,96 @@ const buildCommentsUrl = (
   commentId?: string | number,
 ) => `${origin}/post/${storyId}${commentId ? `#${commentId}` : ""}`;
 
-const buildStoryMetadata = (hit: AlgoliaSearchHit, commentsUrl: string) => {
-  const metadata: string[] = [];
+const buildDescriptionLinksLine = (
+  discussionUrl: string,
+  discussionLabel: string,
+  articleUrl?: string,
+) => {
+  const links = [{ href: discussionUrl, label: discussionLabel }];
 
-  if (hit.url) {
-    metadata.push(
-      `<p>Article URL: <a href="${escapeHtml(hit.url)}">${escapeHtml(hit.url)}</a></p>`,
-    );
+  if (articleUrl) {
+    links.unshift({ href: articleUrl, label: "link" });
   }
 
-  metadata.push(
-    `<p>Comments URL: <a href="${escapeHtml(commentsUrl)}">${escapeHtml(commentsUrl)}</a></p>`,
-  );
-  metadata.push(`<p>Points: ${hit.points ?? 0}</p>`);
-  metadata.push(`<p># Comments: ${hit.num_comments ?? 0}</p>`);
+  return wrapBracketLinksLine(links);
+};
 
-  return metadata;
+const appendDescriptionBody = (
+  descriptionParts: string[],
+  descriptionMode: RSSQueryOptions["descriptionMode"],
+  bodyHtml: string,
+) => {
+  if (descriptionMode !== "full" || !bodyHtml) {
+    return;
+  }
+
+  descriptionParts.push("<hr>");
+  descriptionParts.push(`<div>${bodyHtml}</div>`);
 };
 
 const buildStoryDescription = (
   hit: AlgoliaSearchHit,
+  origin: string,
   commentsUrl: string,
+  query: RSSQueryOptions,
 ) => {
-  const storyText = normalizeHtml(hit.story_text);
-  const metadata = buildStoryMetadata(hit, commentsUrl);
-
-  if (storyText) {
-    return [storyText, "<hr>", ...metadata].join("\n");
+  if (query.descriptionMode === "none") {
+    return undefined;
   }
 
-  return metadata.join("\n");
+  const articleUrl = getExternalArticleUrl(hit.url);
+  const storyText = normalizeHtml(hit.story_text, origin);
+  const descriptionParts: string[] = [];
+
+  descriptionParts.push(
+    `<p>Points: <strong>${escapeHtml(formatCompactNumber(hit.points ?? 0))}</strong> | Comments: <strong>${escapeHtml(formatCount(hit.num_comments ?? 0))}</strong> | submitted by ${buildStrongUserLink(origin, hit.author)}</p>`,
+  );
+
+  descriptionParts.push(buildDescriptionLinksLine(commentsUrl, "comments", articleUrl));
+  appendDescriptionBody(descriptionParts, query.descriptionMode, storyText);
+
+  return descriptionParts.join("\n");
+};
+
+const buildCommentTitle = (hit: AlgoliaSearchHit) => {
+  const storyTitle = decodeText(hit.story_title).trim();
+
+  if (!storyTitle) {
+    return `comment by ${hit.author}`;
+  }
+
+  return `comment by ${hit.author} in "${storyTitle}"`;
+};
+
+const buildCommentDescription = (
+  hit: AlgoliaSearchHit,
+  origin: string,
+  commentUrl: string,
+  query: RSSQueryOptions,
+) => {
+  if (query.descriptionMode === "none") {
+    return undefined;
+  }
+
+  const storyUrl = getExternalArticleUrl(hit.story_url);
+  const commentText = normalizeHtml(hit.comment_text, origin);
+  const descriptionParts: string[] = [];
+
+  descriptionParts.push(
+    `<p>submitted by ${buildStrongUserLink(origin, hit.author)}</p>`,
+  );
+
+  descriptionParts.push(buildDescriptionLinksLine(commentUrl, "comment", storyUrl));
+  appendDescriptionBody(descriptionParts, query.descriptionMode, commentText);
+
+  return descriptionParts.join("\n");
+};
+
+const buildStoryTitle = (hit: AlgoliaSearchHit) => {
+  const title = decodeText(hit.title).trim();
+  const domain = getDisplayDomain(hit.url);
+
+  return appendDomainToTitle(title, domain);
 };
 
 const buildStoryItem = (
@@ -422,10 +641,8 @@ const buildStoryItem = (
   const articleUrl = hit.url ?? commentsUrl;
 
   return {
-    title: decodeText(hit.title),
-    description: query.includeDescription
-      ? buildStoryDescription(hit, commentsUrl)
-      : undefined,
+    title: buildStoryTitle(hit),
+    description: buildStoryDescription(hit, origin, commentsUrl, query),
     link: query.linkTo === "comments" ? commentsUrl : articleUrl,
     comments: commentsUrl,
     guid: `${HN_ITEM_URL}${hit.objectID}`,
@@ -440,15 +657,13 @@ const buildCommentItem = (
   query: RSSQueryOptions,
 ): RSSItem => {
   const storyId = hit.story_id ?? hit.objectID;
-  const commentsUrl = buildCommentsUrl(origin, storyId, hit.objectID);
+  const commentUrl = buildCommentsUrl(origin, storyId, hit.objectID);
 
   return {
-    title: `New comment by ${hit.author}`,
-    description: query.includeDescription
-      ? normalizeHtml(hit.comment_text)
-      : undefined,
-    link: commentsUrl,
-    comments: commentsUrl,
+    title: buildCommentTitle(hit),
+    description: buildCommentDescription(hit, origin, commentUrl, query),
+    link: commentUrl,
+    comments: commentUrl,
     guid: `${HN_ITEM_URL}${hit.objectID}`,
     author: hit.author,
     pubDate: toRSSDate(hit.created_at),

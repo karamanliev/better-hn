@@ -34,10 +34,15 @@ const RSS_PARAMETERS = [
     name: "description",
     scope: "All implemented feeds",
     description:
-      "Descriptions are enabled by default. Use 0 to remove the per-item description block entirely.",
-    example: "/rss/bestcomments?description=0",
+      "Choose meta for metadata plus links, full to also include story text or comment excerpts, or none to remove descriptions entirely. The default is full.",
+    example: "/rss/frontpage?description=meta",
   },
 ];
+
+const RSS_FEED_SECTIONS = RSS_FEED_CATEGORIES.map((category) => ({
+  category,
+  feeds: RSS_FEEDS.filter((feed) => feed.category === category),
+}));
 
 export default defineEventHandler(async (event) => {
   const timing = new ServerTiming();
@@ -56,32 +61,28 @@ export default defineEventHandler(async (event) => {
         </p>
       </div>
 
-      {RSS_FEED_CATEGORIES.map((category) => {
-        const feeds = RSS_FEEDS.filter((feed) => feed.category === category);
+      {RSS_FEED_SECTIONS.map(({ category, feeds }) => (
+        <section class="rssSection" key={category}>
+          <h2>{category}</h2>
+          <div class="rssFeedList">
+            {feeds.map((feed) => {
+              const feedPath = getRSSFeedPath(feed.slug);
 
-        return (
-          <section class="rssSection" key={category}>
-            <h2>{category}</h2>
-            <div class="rssFeedList">
-              {feeds.map((feed) => {
-                const feedPath = getRSSFeedPath(feed.slug);
-
-                return (
-                  <article class="rssFeedCard" key={feed.slug}>
-                    <div class="rssFeedCardHeader">
-                      <h3>{feed.title}</h3>
-                      <Link className="rssFeedUrl" href={feedPath}>
-                        {feedPath}
-                      </Link>
-                    </div>
-                    <p>{feed.summary}</p>
-                  </article>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+              return (
+                <article class="rssFeedCard" key={feed.slug}>
+                  <div class="rssFeedCardHeader">
+                    <h3>{feed.title}</h3>
+                    <Link className="rssFeedUrl" href={feedPath}>
+                      {feedPath}
+                    </Link>
+                  </div>
+                  <p>{feed.summary}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      ))}
 
       <section class="rssSection rssParametersSection">
         <h2>Feed parameters</h2>
